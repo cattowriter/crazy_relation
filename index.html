@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ แผนผังความสัมพันธ์ตัวละคร ✨</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Prompt:wght@400;600;700&display=swap');
+        
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body {
+            font-family: 'Sarabun', 'Prompt', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            padding: 25px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            z-index: 100;
+            border-bottom: 3px solid #667eea;
+            position: relative;
+        }
+        
+        h1 { 
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-top: 8px;
+            font-weight: 400;
+        }
+        
+        .mode-indicator {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        #canvas-container { 
+            flex: 1; 
+            position: relative; 
+            overflow: hidden; 
+            cursor: grab;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1) 0%, transparent 50%),
+                #fafafa;
+        }
+        
+        #canvas-container.grabbing { 
+            cursor: grabbing; 
+        }
+        
+        #canvas-container.dragging-node {
+            cursor: move !important;
+        }
+        
+        .controls { 
+            position: absolute; 
+            top: 20px; 
+            right: 20px; 
+            display: flex; 
+            gap: 10px; 
+            z-index: 10;
+            flex-direction: column;
+        }
+        
+        .control-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn { 
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            width: 45px; 
+            height: 45px; 
+            border-radius: 12px;
+            cursor: pointer; 
+            font-weight: 700;
+            font-size: 20px;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            background: white;
+        }
+        
+        .control-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        .control-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .info-panel {
+            position: absolute; 
+            bottom: 20px; 
+            left: 20px; 
+            width: 380px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            padding: 25px; 
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: none;
+            animation: slideIn 0.3s ease-out;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .info-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .info-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .info-panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+        
+        .info-panel.show { 
+            display: block; 
+        }
+        
+        .close-btn { 
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            cursor: pointer; 
+            border: none; 
+            background: rgba(255, 255, 255, 0.8);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 20px; 
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .close-btn:hover {
+            background: #ff6b6b;
+            color: white;
+            transform: rotate(90deg);
+        }
+        
+        .info-panel h3 {
+            color: #667eea;
+            font-size: 24px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            padding-right: 30px;
+        }
+        
+        .char-desc {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+            white-space: pre-line;
+            line-height: 1.6;
+            padding: 12px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .rel-section-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .rel-item { 
+            margin-bottom: 10px; 
+            font-size: 14px; 
+            line-height: 1.6;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+        
+        .rel-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+            border-left-color: #667eea;
+        }
+        
+        .rel-label { 
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .rel-label.type-wavy {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+        }
+        
+        .rel-label.type-dashed {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+        
+        .legend {
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 18px; 
+            border-radius: 12px;
+            font-size: 13px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 2px solid rgba(102, 126, 234, 0.2);
+        }
+        
+        .legend-title {
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .legend-line {
+            width: 35px;
+            height: 3px;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+        
+        .legend-line.solid {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        
+        .legend-line.wavy {
+            background: repeating-linear-gradient(
+                90deg,
+                #ff6b6b 0px,
+                #ff6b6b 8px,
+                transparent 8px,
+                transparent 16px
+            );
+        }
+        
+        .legend-line.dashed {
+            background: repeating-linear-gradient(
+                90deg,
+                #f093fb 0px,
+                #f093fb 10px,
+                transparent 10px,
+                transparent 20px
+            );
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .legend {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            white-space: nowrap;
+        }
+        
+        /* AI Chatbot Styles */
+        .ai-chat-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            overflow: hidden;
+            z-index: 50;
+            transition: all 0.3s ease;
+        }
+        
+        .ai-chat-container.minimized {
+            width: 280px;
+            height: auto;
+        }
+        
+        .ai-chat-container.minimized .ai-messages,
+        .ai-chat-container.minimized .ai-input-container {
+            display: none;
+        }
+        
+        .ai-chat-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .ai-chat-header:hover {
+            background: linear-gradient(135deg, #7688eb, #8655b3);
+        }
+        
+        .ai-chat-header .bot-icon {
+            font-size: 24px;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .ai-chat-header .title {
+            flex: 1;
+        }
+        
+        .ai-chat-header h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        
+        .ai-chat-header .subtitle {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+        
+        .minimize-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+        
+        .minimize-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .ai-messages {
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        
+        .ai-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .ai-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .ai-messages::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+        
+        .ai-message {
+            margin-bottom: 12px;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .ai-message.user {
+            text-align: right;
+        }
+        
+        .ai-message .bubble {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 15px;
+            max-width: 80%;
+            word-wrap: break-word;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .ai-message.user .bubble {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .ai-message.bot .bubble {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .ai-input-container {
+            padding: 12px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .ai-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 13px;
+            font-family: 'Sarabun', sans-serif;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .ai-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .ai-send-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .ai-send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .ai-send-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .ai-send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .typing-indicator {
+            display: none;
+            padding: 10px 14px;
+            background: white;
+            border-radius: 15px;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: fit-content;
+        }
+        
+        .typing-indicator.show {
+            display: inline-block;
+        }
+        
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✨ แผนผังความสัมพันธ์ตัวละคร ✨</h1>
+        <div class="subtitle">คลิกที่ตัวละครเพื่อดูรายละเอียด • กดค้างแล้วลากเพื่อย้ายตัวละคร • ลากพื้นที่ว่างเพื่อเลื่อนมุมมอง</div>
+        <div class="mode-indicator" id="mode-indicator" style="display: none;">🖱️ โหมดดู</div>
+    </div>
+
+    <div id="canvas-container">
+        <div class="controls">
+            <div class="control-row">
+                <button class="control-btn" onclick="zoomIn()" title="ซูมเข้า">+</button>
+                <button class="control-btn" onclick="zoomOut()" title="ซูมออก">−</button>
+            </div>
+            <div class="control-row">
+                <button class="control-btn" onclick="resetView()" title="รีเซ็ต">⟲</button>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-title">📋 คำอธิบาย</div>
+            <div class="legend-item">
+                <div class="legend-line solid"></div>
+                <span>ความสัมพันธ์</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-line wavy"></div>
+                <span>ไม่ถูกกัน / Enemy</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-line dashed"></div>
+                <span>ความสัมพันธ์รอง</span>
+            </div>
+        </div>
+        
+        <canvas id="canvas"></canvas>
+        
+        <div class="info-panel" id="info-panel">
+            <button class="close-btn" onclick="closeInfo()">×</button>
+            <h3 id="char-name"></h3>
+            <div class="char-desc" id="char-desc"></div>
+            <div class="rel-section-title">
+                <span>🔗</span>
+                <span>ความสัมพันธ์</span>
+            </div>
+            <div id="char-relationships"></div>
+        </div>
+        
+        <div class="ai-chat-container" id="ai-chat-container">
+            <div class="ai-chat-header" onclick="toggleChat()">
+                <div class="bot-icon">🤖</div>
+                <div class="title">
+                    <h4>AI Intelligent Bot</h4>
+                    <div class="subtitle">ช่องทางสอบถามความสัมพันธ์ (น่าเชื่อถือ 100%)</div>
+                </div>
+                <button class="minimize-btn" onclick="event.stopPropagation(); toggleChat();" id="minimize-btn">−</button>
+            </div>
+            <div class="ai-messages" id="ai-messages">
+                <div class="ai-message bot">
+                    <div class="bubble">สวัสดีค่ะ! ยินดีให้คำปรึกษาเรื่องความสัมพันธ์ตัวละครค่ะ 💕</div>
+                </div>
+            </div>
+            <div class="ai-input-container">
+                <input type="text" class="ai-input" id="ai-input" placeholder="ถามอะไรก็ได้เลย..." />
+                <button class="ai-send-btn" id="ai-send-btn" onclick="sendMessage()">📨</button>
+            </div>
+        </div>
+        
+        <div class="tooltip" id="tooltip"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+        const tooltip = document.getElementById('tooltip');
+
+        // ============================================
+        //  DATA
+        // ============================================
+        
+        const characters = [
+            // --- โซนซ้าย ---
+            { id: 'all_seme', name: 'All เมะ\n(ยกเว้น ชามอย)', x: 150, y: 120, color: '#bdc3c7', desc: 'ฮาเร็มของกาลินดา' },
+            { id: 'nessarose', name: 'อันโห', x: 300, y: 220, color: '#e74c3c', desc: 'พระรองธงเขียว' },
+            { id: 'elphaba', name: 'แป้นพิมพ์\n+ พ่อขุนราม', x: 150, y: 380, color: '#27ae60', desc: '' },
+            { id: 'fiyero', name: 'มู่ทู่', x: 300, y: 400, color: '#f39c12', desc: '' },
+            
+            // --- โซนกลาง (แกนหลัก) ---
+            { id: 'all_ia', name: 'All เคะ', x: 450, y: 60, color: '#ecf0f1', stroke: '#667eea', desc: 'เคะทั้งหมด' },
+            { id: 'pa_ting', name: 'ป้าติ่ง', x: 580, y: 200, color: '#e67e22', desc: 'คนที่ใช่ของกาลินดา' },
+            { id: 'galinda', name: 'กาลินดา', x: 480, y: 350, color: '#3498db', desc: 'Center / ยอดพีระมิด / พ่อแม่ของช้อน' },
+            { id: 'catto', name: 'แคทโตะ', x: 680, y: 350, color: '#ff7675', desc: 'พ่อแม่ของช้อน / จะแต่งงานกับกาลินดา' },
+            
+            // --- โซนล่าง ---
+            { id: 'jeab', name: 'เจี๊ยบ', x: 450, y: 550, color: '#f1c40f', desc: 'เจี๊ยบ' },
+            { id: 'chon', name: 'ช้อน\nAKA Spork\n(ลูกของ\nกาลินดา+แคทโตะ)', x: 600, y: 550, color: '#16a085', desc: 'ลูกของกาลินดาและแคทโตะ' },
+            { id: 'moname', name: 'โมนาเมะ\nAKA น้ำปลาชามอย', x: 800, y: 550, color: '#d35400', desc: '' },
+            
+            // --- โซนหัวใจ (ซ้ายล่าง) ---
+            { id: 'heart_group', name: 'ลิน - หนึ่ง\n(18+)', x: 150, y: 600, color: '#ff7675', shape: 'heart', desc: 'โลกที่มีเราแค่สองคน\nกับรายการ18+' },
+
+            // --- โซนขวา ---
+            { id: 'peg', name: 'เพ็ก', x: 800, y: 220, color: '#9b59b6', desc: 'เพ็ก' },
+            { id: 'boq', name: 'หมึกจิ๋ว', x: 800, y: 320, color: '#2ecc71', desc: 'ปีกไก่อร่อย' },
+            { id: 'yumi', name: 'ยูมิจิ', x: 920, y: 140, color: '#ff9ff3', desc: 'ช่วยกันตัดหญ้า' },
+            { id: 'kihun', name: 'กีฮุนท้อง', x: 1020, y: 180, color: '#cd84f1', desc: 'กีฮุนท้อง' },
+            { id: 'dad_mystery', name: 'พ่อเด็ก\nยังเป็นปริศนา', x: 1050, y: 280, color: '#95a5a6', desc: '' },
+            { id: 'dog_disaster', name: 'มหาภัยพิบัติ\nตลอดทริป\nไอซ์แลนด์', x: 950, y: 400, color: '#00cec9', desc: 'มหาภัยพิบัติตลอดทริปไอซ์แลนด์' },
+            { id: 'nana', name: 'เลซี่นานา', x: 950, y: 680, color: '#34495e', desc: 'นั่งนับเลข' }
+        ];
+
+        const relationships = [
+            // All เคะ
+            { from: 'all_ia', to: 'catto', label: 'จีบไปทั่ว' },
+            { from: 'all_ia', to: 'galinda', label: 'แบ่งตำแหน่ง เมะ\nยอดพีระมิด\nเมะชนเมะ?' },
+            
+            // All เมะ -> กาลินดา (ฮาเร็ม)
+            { from: 'all_seme', to: 'galinda', label: 'ฮาเร็ม' },
+            
+            // อันโห
+            { from: 'nessarose', to: 'galinda', label: 'พระรองธงเขียว\nรอเธอหันมา' },
+            { from: 'catto', to: 'nessarose', label: 'แย่งตำแหน่ง เมะ\nยอดปิรามิด' },
+            
+            // แป้นพิมพ์ + พ่อขุนราม <-> มู่ทู่
+            { from: 'elphaba', to: 'fiyero', type: 'wavy', label: 'ไม่ถูกกัน' },
+            
+            // มู่ทู่
+            { from: 'fiyero', to: 'galinda', type: 'dashed', label: 'อดีต' },
+            { from: 'fiyero', to: 'jeab', type: 'wavy', label: 'หม้อทอด?' },
+            { from: 'fiyero', to: 'moname', label: 'ชวนไปนอนบ้าน' },
+            
+            // ป้าติ่ง
+            { from: 'pa_ting', to: 'catto', type: 'wavy', label: 'ศัตรูหัวใจ' },
+            { from: 'pa_ting', to: 'galinda', label: 'คนที่ใช่ ยืนเฉยๆ\nเขาก็รัก\nHeartopia' },
+            { from: 'pa_ting', to: 'peg', label: 'จีบกัน' },
+            
+            // กาลินดา <-> แคทโตะ (พ่อแม่ของช้อน)
+            { from: 'galinda', to: 'catto', label: 'แพ้เงิน\n+ จะแต่งงานกัน\n(พ่อแม่ของช้อน)' },
+            
+
+            // แคทโตะ
+            { from: 'catto', to: 'dog_disaster', type: 'wavy', label: 'เจ้ากรรมนายเวร' },
+            { from: 'catto', to: 'chon', label: 'พ่อ-ลูก' },
+            
+            // หมึกจิ๋ว
+            { from: 'boq', to: 'jeab', label: 'ปีกไก่อร่อย' },
+            { from: 'peg', to: 'boq', label: 'ลูกชาย' },
+            
+            // ยูมิจิ
+            { from: 'yumi', to: 'kihun', label: 'ช่วยกันตัดหญ้า' },
+            { from: 'kihun', to: 'dad_mystery', label: 'กีฮุนท้อง →' },
+            
+            // เลซี่นานา
+            { from: 'nana', to: 'nana', type: 'self', label: 'นั่งลับเล็บ' },
+            
+            // เจี๊ยบ <-> โมนาเมะ
+            { from: 'jeab', to: 'moname', type: 'wavy', label: 'Enemy to lover ??' },
+            
+            // ช้อน
+            { from: 'chon', to: 'jeab', label: 'จีบ' },
+            { from: 'chon', to: 'moname', label: 'คู่สมรส\nระหองระแหง' }
+        ];
+
+        // ============================================
+        //  RENDER LOGIC
+        // ============================================
+
+        let scale = 1;
+        let offsetX = 0, offsetY = 0;
+        let isDragging = false;
+        let dragStartX = 0, dragStartY = 0;
+        let draggedChar = null;
+        let dragStartTime = 0;
+
+        function resizeCanvas() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            draw();
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        
+        function transformX(x) { return (x + offsetX) * scale; }
+        function transformY(y) { return (y + offsetY) * scale; }
+        function inverseTransformX(x) { return x / scale - offsetX; }
+        function inverseTransformY(y) { return y / scale - offsetY; }
+
+        // Toggle Chatbot
+        function toggleChat() {
+            const container = document.getElementById('ai-chat-container');
+            const btn = document.getElementById('minimize-btn');
+            container.classList.toggle('minimized');
+            btn.textContent = container.classList.contains('minimized') ? '+' : '−';
+        }
+
+        // AI Chatbot Functions
+        function sendMessage() {
+            const input = document.getElementById('ai-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const messagesDiv = document.getElementById('ai-messages');
+            
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'ai-message user';
+            userMsg.innerHTML = `<div class="bubble">${message}</div>`;
+            messagesDiv.appendChild(userMsg);
+            
+            input.value = '';
+            
+            // Show typing indicator
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'ai-message bot';
+            typingDiv.innerHTML = `<div class="bubble typing-indicator show"><span></span><span></span><span></span></div>`;
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            // Bot response after delay
+            setTimeout(() => {
+                typingDiv.remove();
+                
+                const botMsg = document.createElement('div');
+                botMsg.className = 'ai-message bot';
+                
+                // The ultimate answer to everything 😂
+                const responses = [
+                    'แคทโตะรักกาลินดา 💕',
+                    'คำตอบคือ... แคทโตะรักกาลินดา! 💖',
+                    'ตามข้อมูลที่วิเคราะห์แล้ว แคทโตะรักกาลินดา ค่ะ 🥰',
+                    'AI ได้ประมวลผลแล้ว: แคทโตะรักกาลินดา! ✨',
+                    'หลังจากวิเคราะห์อย่างละเอียด ได้คำตอบว่า แคทโตะรักกาลินดา 💗',
+                    'ข้อมูลจาก Database: แคทโตะรักกาลินดา 🌟',
+                    'คำตอบที่แม่นยำที่สุดคือ แคทโตะรักกาลินดา! 💝',
+                    'AI มั่นใจ 100%: แคทโตะรักกาลินดา 💘'
+                ];
+                
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                botMsg.innerHTML = `<div class="bubble">${randomResponse}</div>`;
+                messagesDiv.appendChild(botMsg);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }, 1000 + Math.random() * 1000);
+        }
+        
+        // Enter key to send
+        document.getElementById('ai-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function drawLine(x1, y1, x2, y2, type, label) {
+            const startX = transformX(x1);
+            const startY = transformY(y1);
+            const endX = transformX(x2);
+            const endY = transformY(y2);
+            const dx = endX - startX;
+            const dy = endY - startY;
+            const angle = Math.atan2(dy, dx);
+
+            ctx.save();
+            ctx.lineWidth = 3 * scale;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            if (type === 'wavy') {
+                ctx.strokeStyle = '#ff6b6b';
+            } else if (type === 'dashed') {
+                ctx.strokeStyle = '#f093fb';
+            } else {
+                ctx.strokeStyle = '#667eea';
+            }
+
+            ctx.beginPath();
+            if (type === 'wavy') {
+                ctx.setLineDash([]);
+                const steps = 20;
+                for (let i = 0; i <= steps; i++) {
+                    const t = i / steps;
+                    const midX = startX + dx * t;
+                    const midY = startY + dy * t;
+                    const perpX = -Math.sin(angle) * (6 * scale) * (i%2==0 ? 1 : -1);
+                    const perpY = Math.cos(angle) * (6 * scale) * (i%2==0 ? 1 : -1);
+                    ctx.lineTo(midX + perpX, midY + perpY);
+                }
+                ctx.lineTo(endX, endY);
+            } else if (type === 'dashed') {
+                ctx.setLineDash([10 * scale, 6 * scale]);
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+            } else {
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+            }
+            ctx.stroke();
+
+            // Arrow head
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            const headLen = 12 * scale;
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - headLen * Math.cos(angle - Math.PI/6), endY - headLen * Math.sin(angle - Math.PI/6));
+            ctx.lineTo(endX - headLen * Math.cos(angle + Math.PI/6), endY - headLen * Math.sin(angle + Math.PI/6));
+            ctx.closePath();
+            ctx.fillStyle = ctx.strokeStyle;
+            ctx.fill();
+
+            // Label
+            if (label) {
+                const midX = (startX + endX) / 2;
+                const midY = (startY + endY) / 2;
+                const lines = label.split('\n');
+                
+                ctx.font = `${13 * scale}px 'Sarabun', sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                let maxW = 0;
+                lines.forEach(l => maxW = Math.max(maxW, ctx.measureText(l).width));
+                const totalH = lines.length * 17 * scale;
+                
+                ctx.fillStyle = 'rgba(255,255,255,0.95)';
+                ctx.shadowColor = 'rgba(0,0,0,0.2)';
+                ctx.shadowBlur = 10 * scale;
+                ctx.shadowOffsetY = 2 * scale;
+                const padding = 8 * scale;
+                ctx.beginPath();
+                ctx.roundRect(midX - maxW/2 - padding, midY - totalH/2 - padding/2, maxW + padding*2, totalH + padding, 6*scale);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = `600 ${13 * scale}px 'Sarabun', sans-serif`;
+                lines.forEach((l, i) => {
+                    ctx.fillText(l, midX, midY - (totalH/2) + (i+0.5) * 17 * scale);
+                });
+            }
+            ctx.restore();
+        }
+
+        function drawCharacter(char, isHighlighted = false) {
+            const x = transformX(char.x);
+            const y = transformY(char.y);
+            const radius = 50 * scale;
+
+            ctx.save();
+            
+            // Shadow
+            ctx.shadowColor = isHighlighted ? 'rgba(102, 126, 234, 0.5)' : 'rgba(0,0,0,0.2)';
+            ctx.shadowBlur = isHighlighted ? 20 * scale : 12 * scale;
+            ctx.shadowOffsetY = 4 * scale;
+            
+            if (char.shape === 'heart') {
+                // Heart shape
+                ctx.fillStyle = isHighlighted ? '#ffe0e0' : '#ffefef';
+                ctx.strokeStyle = isHighlighted ? '#ff5675' : '#ff7675';
+                ctx.lineWidth = isHighlighted ? 4 * scale : 3 * scale;
+                const size = radius * 2.5;
+                ctx.beginPath();
+                const topCurveHeight = size * 0.3;
+                ctx.moveTo(x, y + size * 0.2);
+                ctx.bezierCurveTo(x, y, x - size / 2, y - size / 2, x - size / 2, y + topCurveHeight);
+                ctx.bezierCurveTo(x - size / 2, y + (size + topCurveHeight) / 2, x, y + size * 0.8, x, y + size);
+                ctx.bezierCurveTo(x, y + size * 0.8, x + size / 2, y + (size + topCurveHeight) / 2, x + size / 2, y + topCurveHeight);
+                ctx.bezierCurveTo(x + size / 2, y - size / 2, x, y, x, y + size * 0.2);
+                ctx.fill();
+                ctx.stroke();
+            } else {
+                // Circle
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = char.color || '#fff';
+                ctx.fill();
+                
+                // Outer ring
+                ctx.strokeStyle = isHighlighted ? '#ffd700' : (char.stroke || 'white');
+                ctx.lineWidth = isHighlighted ? 5 * scale : 4 * scale;
+                ctx.stroke();
+                
+                // Inner highlight
+                if (!isHighlighted) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius - 6*scale, 0, Math.PI * 2);
+                    const gradient = ctx.createRadialGradient(x - radius*0.3, y - radius*0.3, 0, x, y, radius);
+                    gradient.addColorStop(0, 'rgba(255,255,255,0.6)');
+                    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                }
+            }
+
+            ctx.shadowColor = 'transparent';
+
+            // Text
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = `bold ${14 * scale}px 'Prompt', sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const lines = char.name.split('\n');
+            const totalH = lines.length * 17 * scale;
+            const textY = char.shape === 'heart' ? y + radius * 0.5 : y;
+
+            lines.forEach((line, i) => {
+                ctx.fillText(line, x, textY - totalH/2 + (i+0.5) * 17 * scale);
+            });
+
+            ctx.restore();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw relationships first
+            relationships.forEach(rel => {
+                const from = characters.find(c => c.id === rel.from);
+                const to = characters.find(c => c.id === rel.to);
+                if (from && to) drawLine(from.x, from.y, to.x, to.y, rel.type, rel.label);
+            });
+            
+            // Draw characters
+            characters.forEach(char => drawCharacter(char, char.highlighted));
+        }
+
+        function getCharAt(x, y) {
+            const cx = inverseTransformX(x);
+            const cy = inverseTransformY(y);
+            return characters.find(c => {
+                const dist = Math.sqrt((cx - c.x)**2 + (cy - c.y)**2);
+                return dist < 50;
+            });
+        }
+
+        canvas.addEventListener('mousedown', e => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const char = getCharAt(x, y);
+
+            dragStartTime = Date.now();
+            
+            if (char) {
+                draggedChar = char;
+                dragStartX = inverseTransformX(x);
+                dragStartY = inverseTransformY(y);
+                container.style.cursor = 'grabbing';
+            } else {
+                isDragging = true;
+                dragStartX = e.clientX - offsetX * scale;
+                dragStartY = e.clientY - offsetY * scale;
+                container.classList.add('grabbing');
+            }
+        });
+
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            if (draggedChar) {
+                // Dragging character
+                const newX = inverseTransformX(x);
+                const newY = inverseTransformY(y);
+                draggedChar.x = newX;
+                draggedChar.y = newY;
+                draw();
+            } else if (isDragging) {
+                // Dragging canvas
+                offsetX = (e.clientX - dragStartX) / scale;
+                offsetY = (e.clientY - dragStartY) / scale;
+                draw();
+            } else {
+                // Hover effects
+                const char = getCharAt(x, y);
+                
+                if (char) {
+                    canvas.style.cursor = 'grab';
+                    tooltip.textContent = char.name.replace(/\n/g, ' ');
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (e.clientX + 15) + 'px';
+                    tooltip.style.top = (e.clientY + 15) + 'px';
+                } else {
+                    canvas.style.cursor = 'grab';
+                    tooltip.style.display = 'none';
+                }
+                
+                characters.forEach(c => c.highlighted = false);
+                if (char) char.highlighted = true;
+                draw();
+            }
+        });
+
+        canvas.addEventListener('mouseup', e => {
+            const clickDuration = Date.now() - dragStartTime;
+            
+            // If it was a quick click (< 200ms) and on a character, show info
+            if (draggedChar && clickDuration < 200) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const startX = transformX(dragStartX);
+                const startY = transformY(dragStartY);
+                const distance = Math.sqrt((x - startX) ** 2 + (y - startY) ** 2);
+                
+                // If barely moved, treat as click
+                if (distance < 5) {
+                    showInfo(draggedChar);
+                }
+            }
+            
+            isDragging = false;
+            draggedChar = null;
+            container.classList.remove('grabbing');
+            container.style.cursor = 'grab';
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            draggedChar = null;
+            container.classList.remove('grabbing');
+            container.style.cursor = 'grab';
+            characters.forEach(c => c.highlighted = false);
+            tooltip.style.display = 'none';
+            draw();
+        });
+        
+        canvas.addEventListener('wheel', e => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            scale *= delta;
+            if (scale < 0.3) scale = 0.3;
+            if (scale > 3) scale = 3;
+            draw();
+        });
+
+        function showInfo(char) {
+            document.getElementById('char-name').textContent = char.name.replace(/\n/g, ' ');
+            document.getElementById('char-desc').textContent = char.desc || 'ไม่มีคำอธิบาย';
+            const relsDiv = document.getElementById('char-relationships');
+            relsDiv.innerHTML = '';
+            
+            const rels = relationships.filter(r => r.from === char.id || r.to === char.id);
+            
+            if (rels.length === 0) {
+                relsDiv.innerHTML = '<div style="color: #999; font-style: italic;">ยังไม่มีความสัมพันธ์ที่บันทึกไว้</div>';
+            } else {
+                rels.forEach(r => {
+                    const isFrom = r.from === char.id;
+                    const targetId = isFrom ? r.to : r.from;
+                    const target = characters.find(c => c.id === targetId);
+                    
+                    const div = document.createElement('div');
+                    div.className = 'rel-item';
+                    
+                    let labelClass = 'rel-label';
+                    if (r.type === 'wavy') labelClass += ' type-wavy';
+                    if (r.type === 'dashed') labelClass += ' type-dashed';
+                    
+                    const direction = isFrom ? '→' : '←';
+                    div.innerHTML = `<span class="${labelClass}">${r.label || 'เกี่ยวข้อง'}</span> ${direction} <b>${target.name.replace(/\n/g,' ')}</b>`;
+                    relsDiv.appendChild(div);
+                });
+            }
+            
+            document.getElementById('info-panel').classList.add('show');
+        }
+
+        function closeInfo() { 
+            document.getElementById('info-panel').classList.remove('show'); 
+        }
+        
+        function zoomIn() { 
+            scale *= 1.2; 
+            if (scale > 3) scale = 3;
+            draw(); 
+        }
+        
+        function zoomOut() { 
+            scale /= 1.2; 
+            if (scale < 0.3) scale = 0.3;
+            draw(); 
+        }
+        
+        function resetView() { 
+            scale = 1; 
+            offsetX = 0; 
+            offsetY = 0; 
+            draw(); 
+        }
+
+        resizeCanvas();
+    </script>
+</body>
+</html>
